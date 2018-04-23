@@ -26,6 +26,7 @@ public abstract class AbsolutelyModelDialog<MODEL> extends JDialog {
         Dbgui.processView(this);
         Dbgui.processAutoCreate(this);
         setResizable(false);
+        setModal(true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         clickCloseButton = false;
         addWindowListener(new DialogCloseAdapter());
