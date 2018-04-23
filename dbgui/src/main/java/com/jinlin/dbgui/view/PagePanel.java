@@ -81,7 +81,7 @@ public class PagePanel extends AbsolutelyPanel {
         } catch (Exception ignore) {
         }
         if (page <= 0 || page > allPage) {
-            showErrorDialog("跳转错误", "无效的页码！");
+            GuiUtil.showErrorDialog(null, "跳转错误", "无效的页码！");//相对屏幕居中
             return;
         }
         setPage(page, allPage);
