@@ -8,9 +8,11 @@ import com.jinlin.dbgui.anno.ViewBinder;
 import com.jinlin.dbgui.gui.AbsolutelyModelDialog;
 import com.jinlin.dbgui.gui.AbsolutelyPanel;
 import lombok.Data;
+import lombok.Getter;
 import lombok.Setter;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class PagePanel extends AbsolutelyPanel {
     private static final int DEFAULT_SPACE = 20;//按钮间距
@@ -26,14 +28,14 @@ public class PagePanel extends AbsolutelyPanel {
 
     @Setter
     private PageListener pageListener;
-    private int nowPage = 1, allPage = 1; //default
+    @Getter
+    private int nowPage, allPage;
 
     public PagePanel() {
         GuiUtil.disableButtonAsLabel(btnNumber);
         btnNumber.setToolTipText("点击进行页面跳转");
         btnNumber.setEnabled(true);
-        //此时宽高为0，需要通过invokeLater来设定宽高
-        SwingUtilities.invokeLater(this::updateButtonPosition);
+        setPage(1, 1); //default
     }
 
     protected void updateButtonPosition() {
@@ -48,6 +50,12 @@ public class PagePanel extends AbsolutelyPanel {
         btnNext.setLocation(xNum + 135 + DEFAULT_SPACE, y);
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        updateButtonPosition();
+    }
+
     //从1开始
     public void setPage(int now, int all) {
         nowPage = now;
@@ -57,6 +65,10 @@ public class PagePanel extends AbsolutelyPanel {
         btnNumber.setEnabled(all != 1);// 超过1页允许选择跳转
         btnNext.setEnabled(all != 1 && now != all);
         onPageUpdate();
+    }
+
+    public void resetAllPage(int all) {
+        setPage(1, all);
     }
 
     @Click("btnLast")
