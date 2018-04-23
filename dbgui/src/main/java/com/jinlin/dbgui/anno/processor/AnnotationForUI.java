@@ -153,8 +153,10 @@ public class AnnotationForUI {
             if (v.scroll()) {//需要滚动的话，进行一次包装
                 view = new JScrollPane(view);
             }
-            if (info.pos.length == 4) {//only enable 4 param
+            if (info.pos.length == 4) {
                 view.setBounds(info.x, info.y, info.w, info.h);
+            } else if (info.pos.length == 2) {
+                view.setSize(info.w, info.h);
             }
             obj.add(view);
         }
