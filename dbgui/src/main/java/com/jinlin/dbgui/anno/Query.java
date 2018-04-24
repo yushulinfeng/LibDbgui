@@ -23,4 +23,8 @@ public @interface Query {
     String increaseSort() default "";//排序冲突则此项优先
 
     String decreaseSort() default "";
+
+    int ALL_PAGE = -1; //for onePage.
+
+    int onePage() default 0;//指定分页，需要最后有一个页码参数(页码-1全部(自己算页数)，0报错，1首页)
 }

@@ -12,6 +12,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author SunYuLin
@@ -117,5 +118,20 @@ public class GuiUtil {
         System.arraycopy(a, 0, c, 0, a.length);
         System.arraycopy(b, 0, c, a.length, b.length);
         return c;
+    }
+
+    public static int getPageCount(List<?> list, int onePage) {
+        if (list == null || list.size() == 0) return 1;
+        return (list.size() - 1) / onePage + 1;
+    }
+
+    public static <T> List<T> getOnePage(List<T> list, int pageNum, int onePage) {
+        if (list == null || list.size() == 0) return list;
+        List<T> page = new ArrayList<>();
+        for (int i = onePage * (pageNum - 1);
+             i < onePage * pageNum && i < list.size(); i++) {
+            page.add(list.get(i));
+        }
+        return page;
     }
 }

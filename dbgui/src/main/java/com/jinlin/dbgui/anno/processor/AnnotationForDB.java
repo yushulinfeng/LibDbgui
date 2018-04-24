@@ -3,6 +3,7 @@ package com.jinlin.dbgui.anno.processor;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.jinlin.dbgui.GuiUtil;
 import com.jinlin.dbgui.anno.AutoCreate;
 import com.jinlin.dbgui.anno.AutoIncrement;
 import com.jinlin.dbgui.anno.Modify;
@@ -61,7 +62,8 @@ public class AnnotationForDB {
                     }
                 }
                 list.add(new MethodNote(method, value, type)
-                        .setQueryInfo(q.increaseSort(), q.decreaseSort(), q.groupMerge()));
+                        .setQueryInfo(q.increaseSort(), q.decreaseSort())
+                        .setQueryInfo(q.groupMerge(), q.onePage()));
             } else if (m != null) {//modify
                 value = m.value().equals("")
                         ? m.table().getSimpleName().toLowerCase()
@@ -77,11 +79,13 @@ public class AnnotationForDB {
                 if (note.method.equals(method)) {
                     if (note.isQuery) {
                         List<?> result = dealQuery(note, args);
-                        if (note.groupMerge.equals("")) {//无需合并
-                            return result;
-                        } else {
-                            return dealQueryGroup(result, note.groupMerge);
+                        if (!note.groupMerge.equals("")) {//需要合并
+                            result = dealQueryGroup(result, note.groupMerge);
                         }
+                        if (note.onePage > 0) {//处理页码//想法：只有size()的数组。
+                            result = dealPageQuery(result, note, args);
+                        }
+                        return result;
                     } else {
                         return dealModify(note, args);
                     }
@@ -91,6 +95,31 @@ public class AnnotationForDB {
         };
         return Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(),
                 new Class[]{cls}, handler);
+    }
+
+    private static <T> List<T> dealPageQuery(List<T> result, MethodNote note, Object[] args) {
+        int onePage = note.onePage;
+        Method method = note.method;
+        int paramCount = method.getParameterCount();
+        if (paramCount == 0 || note.sql.contains("?" + paramCount)) {//缺少pageNumber参数
+            throw new RuntimeException(note.method + ":Use 'onePage' need a 'int' param " +
+                    "in the end, for 'pageNumber'.");
+        }
+        Object pageNumberArg = args[paramCount - 1];
+        if (!(pageNumberArg instanceof Integer)) {//int/Integer类型均返回true.
+            throw new RuntimeException(note.method + ":Use 'onePage' need a 'int' param " +
+                    "in the end, for 'pageNumber'.");
+        }
+        int pageNumber = (int) pageNumberArg;
+        if (pageNumber == -1) {//负数表示全部
+            return result;
+        }
+        if (pageNumber <= 0) {//-1前面已经返回了
+            throw new RuntimeException(note.method + ":Param 'pageNumber' start with 1. " +
+                    "And can be 'Query.ALL_PAGE' for all page, " +
+                    "then use 'GuiUtil.getPageCount(...)' for page count.");
+        }
+        return GuiUtil.getOnePage(result, pageNumber, onePage);
     }
 
     private static <T> List<List<T>> dealQueryGroup(List<T> result, String groupMerge) {
@@ -227,7 +256,11 @@ public class AnnotationForDB {
             throw new RuntimeException(note.method + ":Too many params.");
         }
         String sql = note.sql;//不要修改参数中的信息
+        boolean usePage = note.onePage > 0;
         for (int i = 1; i <= args.length; i++) {
+            if (usePage && i == args.length) { //跳过页码
+                continue;
+            }
             String rawSql = "?" + i;
             //format check
             if (!sql.contains(rawSql)) {
@@ -253,12 +286,13 @@ public class AnnotationForDB {
     private static class MethodNote {
         private Method method;
         private String sql;
-        private Type type;
         private boolean isQuery;
         //for query
+        private Type type;
         private String incSort;
         private String desSort;
         private String groupMerge;
+        private int onePage;
 
         private MethodNote(Method method, String sql, Type type) {
             this.method = method;
@@ -274,10 +308,15 @@ public class AnnotationForDB {
             this.isQuery = false;
         }
 
-        public MethodNote setQueryInfo(String incSort, String desSort, String groupMerge) {
+        public MethodNote setQueryInfo(String incSort, String desSort) {
             this.incSort = incSort;
             this.desSort = desSort;
+            return this;
+        }
+
+        public MethodNote setQueryInfo(String groupMerge, int onePage) {
             this.groupMerge = groupMerge;
+            this.onePage = onePage;
             return this;
         }
 
