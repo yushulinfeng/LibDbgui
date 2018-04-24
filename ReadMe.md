@@ -9,7 +9,7 @@ DBGUI
 --
 Intellij IDEA 2016.2.5 Project  
 项目依赖[gson](https://github.com/google/gson)
-/[mysql-connector-java](https://www.mysql.com/products/connector/)。  
+/ [mysql-connector-java](https://www.mysql.com/products/connector/)。  
 导入本库`dbgui.jar`(build_dbgui_jar目录下)，以及以上两个依赖库，即可使用。
 
 使用-DB
@@ -54,6 +54,15 @@ Model中的自增主键，或者写入Model到数据库需要忽略的键，
      //返回值中，每组`List<User>`的性别和年龄年龄相同。
      //也就是说，该接口返回的分组数目，会比上个接口多。
      @Query(table = User.class, groupMerge = 'gender#age')
+     List<List<User>> getAllUser();
+     ```
+     高级用法：`@Query`可以使用`onePage`指定分页。
+     另注，分页属于后期处理分页，性能相对原生SQL分页可能慢一些。
+     此时方法参数中需要添加一个参数`int pageNumber`作为最后一个参数。
+     当调用时，传入`Query.ALL_PAGE`时返回所有结果，传入`1`为首页。
+     可通过`GuiUtil.getPageCount(...)`获取全部结果的页数。
+     ```
+     @Query(table = User.class, onePage = 10)
      List<List<User>> getAllUser();
      ```
 5. 创建`Service`类，使用`@AutoCreate`注解修饰需要自动生成的`DAO`接口对象。
@@ -155,6 +164,8 @@ new MyDialog().setSuccessListener(...).showSelf();
 若指定了`@ListTitle`则本参数被忽略。
 若指定了`@ListItemWidth`，但数目小于该列数，多余的列将均分剩余宽度。
 5. `@ListBorder`指定列表边框粗细和颜色。缺省使用默认边框。
+6. 组件`PagePanel`为简易翻页栏，可直接添加到界面，
+通过`setPageListener`设定页面跳转监听，通过`setPage`设置初始页面或跳转页面即可。
 
 使用-UTIL
 --
